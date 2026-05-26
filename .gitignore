@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env*
+frontend/.eslintcache
+
+# Large model files / weights
+backend/models/ssd_mobilenet_v2_coco_2018_03_29/frozen_inference_graph.pb
+*.h5
+*.weights
+*.weights.h5
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Local verification screenshots
+training_simulation_success.png
+checkbox_toggle_success.png
+jpg_extension_success.png
+slider_fixed_success.png
