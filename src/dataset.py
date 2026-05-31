@@ -84,10 +84,14 @@ def setup_subset(limit_images=50):
                     "box": [ann["YMin"], ann["XMin"], ann["YMax"], ann["XMax"]]
                 })
                 
+            from PIL import Image
+            with Image.open(img_path) as pil_img:
+                width_val, height_val = pil_img.size
+                
             annotations_data[img_filename] = {
                 "url": img_url,
-                "width": int(row["OriginalWidth"]) if not pd.isna(row["OriginalWidth"]) else None,
-                "height": int(row["OriginalHeight"]) if not pd.isna(row["OriginalHeight"]) else None,
+                "width": width_val,
+                "height": height_val,
                 "detections": bboxes
             }
         except Exception as e:

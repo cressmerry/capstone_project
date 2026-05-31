@@ -8,6 +8,9 @@ env/
 .pytest_cache/
 .ipynb_checkpoints/
 
+# Data
+dataset/
+
 # Frontend
 frontend/node_modules/
 frontend/dist/

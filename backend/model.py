@@ -34,8 +34,39 @@ class SSDObjectDetector:
             raise FileNotFoundError(
                 f"Model files not found at {self.model_dir}. Run download_models.py first."
             )
+            
+        # Path to custom fine-tuned weights
+        self.custom_weights_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            "dataset",
+            "ssd_fine_tuned_head.weights.h5"
+        )
+        self.custom_model = None
+        if os.path.exists(self.custom_weights_path):
+            try:
+                self.load_custom_model()
+            except Exception as e:
+                print(f"Failed to load custom model weights: {e}")
 
-    def detect(self, image_np, conf_threshold=0.5, nms_threshold=0.4, allowed_classes=None):
+    def load_custom_model(self):
+        import tensorflow as tf
+        from tensorflow.keras import layers, Model
+        from tensorflow.keras.applications import MobileNetV2
+        
+        # Build matching model structure
+        base_model = MobileNetV2(input_shape=(300, 300, 3), include_top=False, weights=None)
+        x = base_model.output
+        x = layers.GlobalAveragePooling2D()(x)
+        x = layers.Dense(128, activation="relu")(x)
+        x = layers.Dropout(0.2)(x)
+        class_output = layers.Dense(5, activation="softmax", name="class_head")(x)
+        bbox_output = layers.Dense(4, activation="sigmoid", name="bbox_head")(x)
+        
+        self.custom_model = Model(inputs=base_model.input, outputs=[class_output, bbox_output])
+        self.custom_model.load_weights(self.custom_weights_path)
+        print("Successfully loaded custom fine-tuned model.")
+
+    def detect(self, image_np, conf_threshold=0.5, nms_threshold=0.4, allowed_classes=None, model_variant="coco"):
         """
         Run object detection on a numpy image (BGR format).
         
@@ -44,6 +75,7 @@ class SSDObjectDetector:
         - conf_threshold: minimum confidence score to retain a detection.
         - nms_threshold: IOU threshold for Non-Maximum Suppression.
         - allowed_classes: set of class labels (strings) to filter by. If None, returns all.
+        - model_variant: model to use for inference ("coco" or "custom").
         
         Returns:
         - List of dicts, each representing a detection:
@@ -54,6 +86,50 @@ class SSDObjectDetector:
             "bbox": [x, y, width, height]  # pixels
           }
         """
+        if model_variant == "custom":
+            if self.custom_model is not None:
+                h, w = image_np.shape[:2]
+                rgb_img = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
+                resized_img = cv2.resize(rgb_img, (300, 300))
+                input_tensor = np.expand_dims(resized_img / 255.0, axis=0).astype(np.float32)
+                
+                pred_class, pred_bbox = self.custom_model(input_tensor, training=False)
+                
+                pred_class = pred_class.numpy()[0]
+                pred_bbox = pred_bbox.numpy()[0]  # [ymin, xmin, ymax, xmax]
+                
+                class_id = int(np.argmax(pred_class))
+                confidence = float(pred_class[class_id])
+                
+                class_map_inv = {0: "person", 1: "laptop", 2: "chair", 3: "book", 4: "table"}
+                class_label = class_map_inv.get(class_id, "unknown")
+                
+                results = []
+                if confidence >= conf_threshold:
+                    if allowed_classes is None or class_label in allowed_classes:
+                        ymin, xmin, ymax, xmax = pred_bbox
+                        x = int(xmin * w)
+                        y = int(ymin * h)
+                        box_w = int((xmax - xmin) * w)
+                        box_h = int((ymax - ymin) * h)
+                        
+                        # Clamp coordinates to image boundaries
+                        x = max(0, min(x, w - 1))
+                        y = max(0, min(y, h - 1))
+                        box_w = max(0, min(box_w, w - x))
+                        box_h = max(0, min(box_h, h - y))
+                        
+                        if box_w > 0 and box_h > 0:
+                            results.append({
+                                "class_id": class_id,
+                                "label": class_label,
+                                "confidence": round(confidence, 4),
+                                "bbox": [x, y, box_w, box_h]
+                            })
+                return results
+            else:
+                print("Custom model weights not loaded. Falling back to COCO model.")
+
         h, w = image_np.shape[:2]
         
         # SSD MobileNet V2 input size is 300x300

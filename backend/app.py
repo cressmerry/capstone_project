@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import numpy as np
 import cv2
@@ -6,6 +7,9 @@ from fastapi import FastAPI, UploadFile, File, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
+
+# Ensure the backend directory is in the import path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from model import SSDObjectDetector
 
@@ -58,7 +62,8 @@ async def detect_objects(
     file: UploadFile = File(...),
     conf_threshold: float = Query(0.5, ge=0.0, le=1.0),
     nms_threshold: float = Query(0.4, ge=0.0, le=1.0),
-    allowed_classes: str = Query(None)  # Comma-separated list
+    allowed_classes: str = Query(None),  # Comma-separated list
+    model_variant: str = Query("coco")
 ):
     if detector is None:
         raise HTTPException(
@@ -88,7 +93,8 @@ async def detect_objects(
             image,
             conf_threshold=conf_threshold,
             nms_threshold=nms_threshold,
-            allowed_classes=classes_filter
+            allowed_classes=classes_filter,
+            model_variant=model_variant
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference failed: {str(e)}")
