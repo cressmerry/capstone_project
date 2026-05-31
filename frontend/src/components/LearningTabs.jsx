@@ -29,13 +29,13 @@ export default function LearningTabs({ learningTab, setLearningTab }) {
           <div className="flex-1 flex flex-col gap-4">
             <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded bg-cyan-500" />
-              Kaggle Open Images Object Detection
+              Kaggle Open Images Workplace Dataset
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              The **Kaggle Open Images Dataset** contains over 9 million high-quality images labeled with bounding boxes, spaning across thousands of categories. In computer vision, standard labels are stored using unique identifier strings called **Machine IDs (MIDs)** rather than text strings, to ensure multi-language localization and semantic grouping.
+              The **Kaggle Open Images Dataset** contains over 9 million high-quality images labeled with bounding boxes, spanning across thousands of categories. In computer vision, standard labels are stored using unique identifier strings called **Machine IDs (MIDs)** rather than text strings, to ensure multi-language localization and semantic grouping.
             </p>
             <p className="text-xs text-slate-400 leading-relaxed">
-              For this computer vision laboratory, we filter the dataset validation split down to five target everyday classes. Notice the mapping between standard class names and their unique GCS directory folder MIDs:
+              For this computer vision laboratory, we filter the dataset validation split down to five target workplace classes. Notice the mapping between standard class names and their unique GCS directory folder MIDs:
             </p>
             <div className="overflow-hidden border border-white/5 rounded-xl">
               <Table className="text-xs">
@@ -65,6 +65,31 @@ export default function LearningTabs({ learningTab, setLearningTab }) {
                   <TableRow>
                     <TableCell className="font-semibold text-slate-200">Book</TableCell>
                     <TableCell className="font-mono text-cyan-400">/m/01dx8v</TableCell>
+                    <TableCell className="text-slate-400">Google GCS Bucket</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-semibold text-slate-200">Dining Table</TableCell>
+                    <TableCell className="font-mono text-cyan-400">/m/01y9k5</TableCell>
+                    <TableCell className="text-slate-400">Google GCS Bucket</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-semibold text-slate-200">Cell Phone</TableCell>
+                    <TableCell className="font-mono text-cyan-400">/m/018xm</TableCell>
+                    <TableCell className="text-slate-400">Google GCS Bucket</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-semibold text-slate-200">Cup</TableCell>
+                    <TableCell className="font-mono text-cyan-400">/m/0cmf2</TableCell>
+                    <TableCell className="text-slate-400">Google GCS Bucket</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-semibold text-slate-200">Keyboard</TableCell>
+                    <TableCell className="font-mono text-cyan-400">/m/01m2v</TableCell>
+                    <TableCell className="text-slate-400">Google GCS Bucket</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-semibold text-slate-200">Mouse</TableCell>
+                    <TableCell className="font-mono text-cyan-400">/m/020lf</TableCell>
                     <TableCell className="text-slate-400">Google GCS Bucket</TableCell>
                   </TableRow>
                 </TableBody>

@@ -59,7 +59,7 @@ class SSDObjectDetector:
         x = layers.GlobalAveragePooling2D()(x)
         x = layers.Dense(128, activation="relu")(x)
         x = layers.Dropout(0.2)(x)
-        class_output = layers.Dense(5, activation="softmax", name="class_head")(x)
+        class_output = layers.Dense(9, activation="softmax", name="class_head")(x)
         bbox_output = layers.Dense(4, activation="sigmoid", name="bbox_head")(x)
         
         self.custom_model = Model(inputs=base_model.input, outputs=[class_output, bbox_output])
@@ -101,7 +101,17 @@ class SSDObjectDetector:
                 class_id = int(np.argmax(pred_class))
                 confidence = float(pred_class[class_id])
                 
-                class_map_inv = {0: "person", 1: "laptop", 2: "chair", 3: "book", 4: "table"}
+                class_map_inv = {
+                    0: "person",
+                    1: "laptop",
+                    2: "chair",
+                    3: "book",
+                    4: "dining table",
+                    5: "cell phone",
+                    6: "cup",
+                    7: "keyboard",
+                    8: "mouse"
+                }
                 class_label = class_map_inv.get(class_id, "unknown")
                 
                 results = []

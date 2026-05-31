@@ -1,8 +1,8 @@
-# InsightSSD Object Detection System
+# InsightSSD Workplace Detector
 
-InsightSSD is an interactive object detection application that combines a pre-trained **Single Shot MultiBox Detector (SSD)** with a lightweight frontend dashboard. It features an OpenCV DNN backend for inference, customizable filtering thresholds, class category selection, and support for both uploaded images and live camera streams.
+InsightSSD Workplace Detector is an interactive object detection dashboard and deep learning laboratory designed for professional office automation, workplace safety, and ergonomics monitoring. It features a high-performance Python backend server combined with a premium React dark-mode dashboard.
 
-The repository also includes standalone pipelines and Jupyter notebooks for custom training/fine-tuning models on everyday object categories from the Google Open Images dataset.
+The application allows users to perform real-time inference on uploaded office photos or live camera streams, with dynamic model selection between a general-purpose **COCO Pre-trained Model** (80 classes) and a custom **Fine-Tuned Workplace Model** (9 classes).
 
 ---
 
@@ -10,18 +10,22 @@ The repository also includes standalone pipelines and Jupyter notebooks for cust
 
 ```text
 ├── backend/                   # FastAPI Server & OpenCV Inference Engine
-│   ├── models/                # Downloaded weights directory (git-ignored)
-│   ├── app.py                 # FastAPI endpoints & static routing
-│   ├── model.py               # OpenCV DNN SSD wrapper class
-│   ├── download_models.py     # Script to pull weights/configs from TensorFlow/GitHub
+│   ├── models/                # Downloaded COCO weights directory (git-ignored)
+│   ├── app.py                 # FastAPI endpoints & static assets routing
+│   ├── model.py               # Dual-inference (OpenCV DNN & TensorFlow) model wrapper
+│   ├── download_models.py     # Script to pull base pre-trained COCO models
 │   └── requirements.txt       # Python backend dependencies
-├── frontend/                  # React & Vite Dashboard Dashboard
-│   ├── src/                   # React components & app entry points
-│   └── package.json           # Frontend scripts and dependencies
-├── src/                       # Custom SSD training utilities
-│   ├── dataset.py             # Open Images dataset downloader & formatter
-│   └── train.py               # Custom TensorFlow training loop script
-├── notebook/                  # Jupyter Lab Walkthroughs
+├── dataset/                   # Local dataset directory (git-ignored)
+│   ├── images/                # Downloaded raw images (.jpg format)
+│   ├── annotations.json       # Formatted validation bounding boxes
+│   └── ssd_fine_tuned_head.weights.h5 # Fine-tuned custom model weights
+├── frontend/                  # React & Vite Dashboard Frontend
+│   ├── src/                   # React components (Header, Parameters, Tabs, etc.)
+│   └── package.json           # Frontend packages and build scripts
+├── src/                       # Custom SSD training pipeline
+│   ├── dataset.py             # Parallel Open Images dataset downloader & parser
+│   └── train.py               # tf.data.Dataset based transfer learning pipeline
+├── notebook/                  # Jupyter Lab walkthroughs
 │   └── train_ssd_openimages.ipynb  # Interactive fine-tuning notebook
 └── README.md                  # Project-wide documentation (this file)
 ```
@@ -30,125 +34,112 @@ The repository also includes standalone pipelines and Jupyter notebooks for cust
 
 ## System Requirements
 
-- **Python**: version 3.8 or higher.
-- **Node.js**: version 18 or higher.
-- **npm**: version 9 or higher.
-- **Web Camera**: (Optional) For real-time inference features.
+- **Python**: Version 3.8 or higher.
+- **Node.js**: Version 18 or higher.
+- **npm**: Version 9 or higher.
+- **Web Camera**: (Optional) For real-time workspace monitoring.
 
 ---
 
-## 1. Backend Setup & Launch
+## 1. Setup & Installation
 
-The backend is built with **FastAPI** and uses **OpenCV (DNN module)** for running inference.
-
-### Step 1.1: Create a Python Virtual Environment
-Navigate to the project root directory and create/activate a virtual environment:
+### Step 1.1: Backend Virtual Environment
+Navigate to the project root directory and set up a virtual environment containing Python dependencies:
 
 ```bash
 # Create the virtual environment
 python3 -m venv .venv
 
-# Activate it
+# Activate the virtual environment
 source .venv/bin/activate
-```
 
-### Step 1.2: Install Dependencies
-Install the required packages listed in `backend/requirements.txt`:
-
-```bash
+# Install required packages
 pip install -r backend/requirements.txt
 ```
 
-### Step 1.3: Download Pre-trained Weights & Labels
-Before launching the server, you must download the SSD MobileNet V2 weights and label configuration. A utility script is provided to automate this:
+### Step 1.2: Download Base COCO Models
+Before launching the server, you need to download the base SSD MobileNet V2 weights and configs:
 
 ```bash
 python backend/download_models.py
 ```
-This script downloads:
-1. `frozen_inference_graph.pb` (SSD MobileNet V2 weights trained on COCO dataset)
-2. `ssd_mobilenet_v2_coco_2018_03_29.pbtxt` (OpenCV text configuration file)
-3. Saves a local labels dictionary `coco_labels.json`.
+This utility script downloads:
+1. `frozen_inference_graph.pb` (Pre-trained COCO weights)
+2. `ssd_mobilenet_v2_coco_2018_03_29.pbtxt` (OpenCV DNN configurations)
+3. Saves a local labels mapping file `coco_labels.json`.
 
-### Step 1.4: Launch the FastAPI server
-Start the backend API using Uvicorn:
-
-```bash
-# Run from root directory
-uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000
-```
-- **API Status URL**: [http://127.0.0.1:8000/api/status](http://127.0.0.1:8000/api/status)
-- **Interactive API Docs**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
----
-
-## 2. Frontend Setup & Run (Development)
-
-The frontend is built with **React**, **Vite**, and styled with custom CSS glassmorphism components.
-
-### Step 2.1: Navigate to Frontend Directory & Install Modules
-Open a new terminal window, ensure Node.js is installed, and run:
+### Step 1.3: Frontend Dependencies
+Navigate to the frontend folder and install Node.js modules:
 
 ```bash
 cd frontend
 npm install
 ```
 
-### Step 2.2: Launch Vite Development Server
-Run the local dev server:
+---
 
+## 2. Workplace Fine-Tuning Pipeline
+
+The pipeline is built to train a specialized detector head for everyday office-based automation. The 9 targeted target classes are:
+- `person`, `laptop`, `chair`, `book`, `dining table` (mapped from Open Images `table`), `cell phone`, `cup`, `keyboard`, `mouse`.
+
+### Step 2.1: Exhaustive Data Acquisition
+To compile the training dataset, run the downloader script:
 ```bash
-npm run dev
+python src/dataset.py
 ```
-By default, the dashboard runs at [http://localhost:5173/](http://localhost:5173/). The application will connect directly to the FastAPI server running on port 8000.
+* **How it works**: The script downloads the official Google Open Images validation split bounding boxes and metadata, filters them for the 9 targeted office classes, and retrieves images in parallel using `concurrent.futures.ThreadPoolExecutor` (20 worker threads).
+* **Console Progress**: Uses `tqdm` to display download speeds, ETA, and progress bars. Bounding box coordinates are saved in normalized `[ymin, xmin, ymax, xmax]` format inside `dataset/annotations.json`.
+
+### Step 2.2: TensorFlow Model Training
+Run the training script to train the custom SSD head:
+```bash
+python src/train.py
+```
+* **tf.data.Dataset Input Pipeline**: Refactored to adhere to industry-standard deep learning practices. Instead of loading full images into RAM, it streams paths, decodes JPEGs natively, resizes them, and normalizes them in parallel on CPU worker threads using `tf.data.AUTOTUNE` and `.prefetch()`.
+* **Architecture**: Freezes the pre-trained `MobileNetV2` feature extractor backbone and appends two custom output heads:
+  1. **Classification Head**: Dense layer outputting probability distribution over 9 target classes.
+  2. **Bounding Box Head**: Regression layer outputting normalized bounding box coordinates.
+* **Loss Function**: Custom MultiBox Loss combining Categorical Crossentropy and Smooth L1 Loss.
+* **Result**: Saves the output weights to `dataset/ssd_fine_tuned_head.weights.h5`.
 
 ---
 
-## 3. Production Deployment (Single-Server Mode)
+## 3. Running the Application
 
-For deployment, you can build the frontend static assets and serve them directly from the FastAPI server instead of running two separate dev processes.
+### Option A: Local Development Mode (Separate Servers)
+Run both components concurrently in separate terminals for fast hot-reloading:
 
-### Step 3.1: Build the React Application
-In the `frontend` directory, build the distribution bundle:
+* **Start Backend**:
+  ```bash
+  # Ensure virtual environment is active
+  source .venv/bin/activate
+  uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000
+  ```
+* **Start Frontend**:
+  ```bash
+  cd frontend
+  npm run dev
+  ```
+  Open [http://localhost:5173/](http://localhost:5173/) in your web browser.
 
-```bash
-cd frontend
-npm run build
-```
-This compilation creates a `frontend/dist/` directory containing all optimized HTML, JS, and CSS files.
+### Option B: Production Deployment Mode (Single Server)
+FastAPI can serve the React frontend static pages directly:
 
-### Step 3.2: Run FastAPI
-The FastAPI app mounts `frontend/dist/` at the root path `/`. Simply launch the backend server:
-
-```bash
-# Run from root directory
-uvicorn backend.app:app --host 127.0.0.1 --port 8000
-```
-Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser to view the fully deployed, self-contained dashboard.
+1. **Build Frontend**:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+2. **Launch Integrated Server**:
+   ```bash
+   # From root directory
+   uvicorn backend.app:app --host 127.0.0.1 --port 8000
+   ```
+   Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser. The dashboard automatically syncs with the FastAPI detection endpoints.
 
 ---
 
-## 4. Custom Model Training & Exploration
-
-To train or fine-tune models from scratch on the Open Images dataset:
-
-### Jupyter Notebook Walkthrough
-Launch Jupyter Lab or Notebook to run the fine-tuning tutorial interactively:
-```bash
-jupyter lab
-```
-Navigate to `notebook/train_ssd_openimages.ipynb`. It details:
-- Downloading subsets of the Open Images dataset.
-- Parsing annotations.
-- Implementing a MultiBox Loss function.
-- Fine-tuning the SSD detection head.
-
-### CLI Pipeline Scripts
-- **Download Dataset**: Use `src/dataset.py` to target specific everyday object categories (such as person, laptop, chair, book) and download images/metadata from Google Cloud Storage:
-  ```bash
-  python src/dataset.py
-  ```
-- **Train SSD**: Run the TensorFlow training loop to train the Single Shot MultiBox Detector head:
-  ```bash
-  python src/train.py
-  ```
+## 4. Interactive Testing
+- **Model Switching**: Toggle between "COCO" and "Fine-Tuned SSD" on the dashboard settings. The backend automatically loads the fine-tuned `.weights.h5` head when the Custom model is requested.
+- **Interactive Checklists**: Use the scrollable checklist panel to selectively isolate and display targets (e.g. tracking computer peripheral placement or human presence).

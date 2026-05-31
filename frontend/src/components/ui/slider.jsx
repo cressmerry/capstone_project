@@ -25,7 +25,7 @@ function Slider({
       className={cn("data-horizontal:w-full data-vertical:h-full", className)}
       data-slot="slider"
       defaultValue={defaultValue}
-      value={value}
+      value={_values}
       min={min}
       max={max}
       thumbAlignment="edge"

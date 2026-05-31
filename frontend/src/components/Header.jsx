@@ -11,12 +11,12 @@ export default function Header({ serverStatus, serverBackend }) {
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent flex items-center gap-2">
-            InsightSSD
+            InsightSSD Workplace Detector
             <Badge variant="outline" className="border-cyan-500/30 text-cyan-400 font-mono text-[10px] uppercase tracking-wider py-0 px-2 bg-cyan-950/20">
               MobileNet v2
             </Badge>
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">Interactive Object Detection & Fine-Tuning Simulator</p>
+          <p className="text-xs text-slate-400 mt-0.5">Workplace Object Detection & Fine-Tuning Dashboard</p>
         </div>
       </div>
       

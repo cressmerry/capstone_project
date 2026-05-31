@@ -38,7 +38,7 @@ export default function App() {
   const [activeModel, setActiveModel] = useState('coco') // 'coco' | 'custom'
   const [confThreshold, setConfThreshold] = useState(50)
   const [nmsThreshold, setNmsThreshold] = useState(40)
-  const [checkedClasses, setCheckedClasses] = useState(['person', 'laptop', 'chair', 'book', 'cell phone'])
+  const [checkedClasses, setCheckedClasses] = useState(['person', 'laptop', 'chair', 'book', 'cell phone', 'dining table'])
   
   // Server connectivity State
   const [serverStatus, setServerStatus] = useState('checking') // 'online' | 'offline' | 'checking'
@@ -79,6 +79,15 @@ export default function App() {
     nmsThresholdRef.current = nmsThreshold
     activeModelRef.current = activeModel
   }, [checkedClasses, confThreshold, nmsThreshold, activeModel])
+
+  // Reset checked classes when switching models to matching defaults
+  useEffect(() => {
+    if (activeModel === 'custom') {
+      setCheckedClasses(['person', 'laptop', 'chair', 'book', 'dining table', 'cell phone', 'cup', 'keyboard', 'mouse'])
+    } else {
+      setCheckedClasses(['person', 'laptop', 'chair', 'book', 'cell phone', 'dining table'])
+    }
+  }, [activeModel])
   
   // Resizing state triggers redraw
   const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 })
@@ -439,7 +448,7 @@ export default function App() {
 
         {/* FOOTER */}
         <footer className="flex items-center justify-between text-[11px] text-slate-600 mt-4 border-t border-white/5 pt-4 pb-8">
-          <span>InsightSSD Lab Dashboard &copy; 2026.</span>
+          <span>InsightSSD Workplace Lab Dashboard &copy; 2026.</span>
           <div className="flex items-center gap-1 hover:text-slate-400 cursor-pointer">
             <Code className="w-3.5 h-3.5" />
             <span>GitHub repository</span>

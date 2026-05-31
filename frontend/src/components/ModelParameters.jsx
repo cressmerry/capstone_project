@@ -5,7 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
 
-const COMMON_CLASSES = ['person', 'laptop', 'chair', 'book', 'cell phone', 'cup', 'dining table', 'backpack', 'bottle', 'handbag', 'keyboard', 'mouse']
+const COCO_CLASSES = [
+  'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',
+  'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
+  'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
+  'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard',
+  'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
+  'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
+  'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard',
+  'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase',
+  'scissors', 'teddy bear', 'hair drier', 'toothbrush'
+]
+
+const CUSTOM_CLASSES = ['person', 'laptop', 'chair', 'book', 'dining table', 'cell phone', 'cup', 'keyboard', 'mouse']
 
 export default function ModelParameters({
   activeModel,
@@ -18,6 +30,7 @@ export default function ModelParameters({
   handleCheckboxChange,
   setCheckedClasses
 }) {
+  const classesToDisplay = activeModel === 'custom' ? CUSTOM_CLASSES : COCO_CLASSES;
   return (
     <section className="lg:col-span-4 flex flex-col gap-6">
       <Card className="glass-panel border-white/5 text-slate-100">
@@ -70,7 +83,7 @@ export default function ModelParameters({
               </div>
               <Slider 
                 value={confThreshold} 
-                onValueChange={(val) => setConfThreshold(val)}
+                onValueChange={(val) => setConfThreshold(val[0])}
                 max={100} 
                 min={10} 
                 step={1}
@@ -85,7 +98,7 @@ export default function ModelParameters({
               </div>
               <Slider 
                 value={nmsThreshold} 
-                onValueChange={(val) => setNmsThreshold(val)}
+                onValueChange={(val) => setNmsThreshold(val[0])}
                 max={100} 
                 min={10} 
                 step={1}
@@ -99,17 +112,27 @@ export default function ModelParameters({
           {/* Target Class Filters */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Class Filter Filters</label>
-              <Button 
-                variant="link" 
-                onClick={() => setCheckedClasses([])} 
-                className="text-[10px] text-rose-400 p-0 h-auto hover:text-rose-300"
-              >
-                Clear All
-              </Button>
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Class Filters</label>
+              <div className="flex gap-2">
+                <Button 
+                  variant="link" 
+                  onClick={() => setCheckedClasses(classesToDisplay)} 
+                  className="text-[10px] text-cyan-400 p-0 h-auto hover:text-cyan-300"
+                >
+                  Select All
+                </Button>
+                <span className="text-[10px] text-slate-500">|</span>
+                <Button 
+                  variant="link" 
+                  onClick={() => setCheckedClasses([])} 
+                  className="text-[10px] text-rose-400 p-0 h-auto hover:text-rose-300"
+                >
+                  Clear All
+                </Button>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {COMMON_CLASSES.map(cls => {
+            <div className="grid grid-cols-2 gap-2 text-xs max-h-[220px] overflow-y-auto pr-1">
+              {classesToDisplay.map(cls => {
                 const isChecked = checkedClasses.includes(cls);
                 return (
                   <div 

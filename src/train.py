@@ -1,7 +1,5 @@
 import os
 import json
-import cv2
-import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, Model
 from tensorflow.keras.applications import MobileNetV2
@@ -14,12 +12,22 @@ ANNOTATIONS_FILE = os.path.join(DATASET_DIR, "annotations.json")
 BATCH_SIZE = 4
 EPOCHS = 5
 IMG_SIZE = 300
-NUM_CLASSES = 5  # person, laptop, chair, book, table
-CLASS_MAP = {"person": 0, "laptop": 1, "chair": 2, "book": 3, "table": 4}
+NUM_CLASSES = 9  # person, laptop, chair, book, table, cell phone, cup, keyboard, mouse
+CLASS_MAP = {
+    "person": 0,
+    "laptop": 1,
+    "chair": 2,
+    "book": 3,
+    "table": 4,
+    "cell phone": 5,
+    "cup": 6,
+    "keyboard": 7,
+    "mouse": 8
+}
 
 def load_data():
     """
-    Loads images and bboxes from annotations.json, prepares them for training.
+    Parses annotations.json and returns lists of image paths, class targets, and bounding box targets.
     """
     if not os.path.exists(ANNOTATIONS_FILE):
         raise FileNotFoundError(
@@ -29,7 +37,7 @@ def load_data():
     with open(ANNOTATIONS_FILE, "r") as f:
         annotations = json.load(f)
         
-    x_train = []
+    image_paths = []
     y_class = []
     y_bbox = []
     
@@ -38,30 +46,33 @@ def load_data():
         if not os.path.exists(img_path):
             continue
             
-        # Load and resize image
-        img = cv2.imread(img_path)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
-        x_train.append(img / 255.0)  # Normalize
-        
         # Take the first detection for simplification in this educational script
         # In a full SSD, we match detections with anchor boxes.
-        # For this demonstration, we focus on single-object regression & classification.
         if len(data["detections"]) > 0:
             det = data["detections"][0]
             cls_name = det["class"]
             cls_id = CLASS_MAP.get(cls_name, 0)
-            
-            # Box format: [ymin, xmin, ymax, xmax]
             bbox = det["box"]
-            
-            y_class.append(cls_id)
-            y_bbox.append(bbox)
         else:
-            y_class.append(0)  # Background/Person
-            y_bbox.append([0.0, 0.0, 0.0, 0.0])
+            cls_id = 0
+            bbox = [0.0, 0.0, 0.0, 0.0]
             
-    return np.array(x_train, dtype=np.float32), np.array(y_class, dtype=np.int32), np.array(y_bbox, dtype=np.float32)
+        image_paths.append(img_path)
+        y_class.append(cls_id)
+        y_bbox.append(bbox)
+        
+    return image_paths, y_class, y_bbox
+
+def preprocess_image_and_targets(image_path, label, bbox):
+    """
+    Reads image file, decodes, resizes, and normalizes it.
+    This runs on CPU using tf.data AUTOTUNE to avoid bottlenecks.
+    """
+    img_raw = tf.io.read_file(image_path)
+    img = tf.image.decode_jpeg(img_raw, channels=3)
+    img = tf.image.resize(img, [IMG_SIZE, IMG_SIZE])
+    img = img / 255.0  # Normalize to [0, 1]
+    return img, label, bbox
 
 def build_transfer_ssd_model():
     """
@@ -115,16 +126,24 @@ def custom_multibox_loss(y_true_class, y_pred_class, y_true_bbox, y_pred_bbox):
 def main():
     print("TensorFlow Version:", tf.__version__)
     
-    # 1. Load custom training subset
+    # 1. Load custom training subset via tf.data.Dataset pipeline
     try:
-        x_train, y_class, y_bbox = load_data()
-        print(f"Loaded training data: Images shape={x_train.shape}, Labels={y_class.shape}, Bboxes={y_bbox.shape}")
+        image_paths, y_class, y_bbox = load_data()
+        print(f"Parsed annotations: Found {len(image_paths)} valid images.")
+        
+        dataset = tf.data.Dataset.from_tensor_slices((image_paths, y_class, y_bbox))
+        dataset = dataset.shuffle(buffer_size=max(len(image_paths), 100), reshuffle_each_iteration=True)
+        dataset = dataset.map(preprocess_image_and_targets, num_parallel_calls=tf.data.AUTOTUNE)
+        dataset = dataset.batch(BATCH_SIZE)
+        dataset = dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
     except Exception as e:
         print(f"Failed to load dataset: {e}")
-        print("Creating mock dataset for demonstration...")
-        x_train = np.random.rand(10, IMG_SIZE, IMG_SIZE, 3).astype(np.float32)
-        y_class = np.random.randint(0, NUM_CLASSES, size=(10,)).astype(np.int32)
-        y_bbox = np.random.rand(10, 4).astype(np.float32)
+        print("Creating mock tf.data.Dataset for demonstration...")
+        mock_imgs = tf.random.uniform((10, IMG_SIZE, IMG_SIZE, 3), dtype=tf.float32)
+        mock_cls = tf.random.uniform((10,), minval=0, maxval=NUM_CLASSES, dtype=tf.int32)
+        mock_box = tf.random.uniform((10, 4), dtype=tf.float32)
+        dataset = tf.data.Dataset.from_tensor_slices((mock_imgs, mock_cls, mock_box))
+        dataset = dataset.batch(BATCH_SIZE)
 
     # 2. Build model
     model = build_transfer_ssd_model()
@@ -133,23 +152,15 @@ def main():
     # 3. Define Optimizer
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
     
-    # 4. Custom Training Loop
+    # 4. Custom Training Loop with tf.data.Dataset iteration
     print("\nStarting Training of SSD Output Head on Open Images subset...")
     for epoch in range(EPOCHS):
         epoch_loss = 0.0
         epoch_class_loss = 0.0
         epoch_bbox_loss = 0.0
+        step_count = 0
         
-        # Simple batching
-        num_batches = int(np.ceil(len(x_train) / BATCH_SIZE))
-        for step in range(num_batches):
-            start_idx = step * BATCH_SIZE
-            end_idx = min(start_idx + BATCH_SIZE, len(x_train))
-            
-            x_batch = x_train[start_idx:end_idx]
-            y_class_batch = y_class[start_idx:end_idx]
-            y_bbox_batch = y_bbox[start_idx:end_idx]
-            
+        for x_batch, y_class_batch, y_bbox_batch in dataset:
             with tf.GradientTape() as tape:
                 pred_class, pred_bbox = model(x_batch, training=True)
                 total_loss, c_loss, b_loss = custom_multibox_loss(
@@ -163,9 +174,10 @@ def main():
             epoch_loss += total_loss.numpy()
             epoch_class_loss += c_loss.numpy()
             epoch_bbox_loss += b_loss.numpy()
+            step_count += 1
             
-        print(f"Epoch {epoch+1}/{EPOCHS} - Total Loss: {epoch_loss/num_batches:.4f} "
-              f"(Class Loss: {epoch_class_loss/num_batches:.4f}, Bbox Loss: {epoch_bbox_loss/num_batches:.4f})")
+        print(f"Epoch {epoch+1}/{EPOCHS} - Total Loss: {epoch_loss/step_count:.4f} "
+              f"(Class Loss: {epoch_class_loss/step_count:.4f}, Bbox Loss: {epoch_bbox_loss/step_count:.4f})")
         
     print("\nTraining completed successfully! Output head weights are updated.")
     
