@@ -48,7 +48,7 @@ Navigate to the project root directory and set up a virtual environment containi
 
 ```bash
 # Create the virtual environment
-python3 -m venv .venv
+python3 3.13 -m venv .venv
 
 # Activate the virtual environment
 source .venv/bin/activate
