@@ -34,7 +34,7 @@ The application allows users to perform real-time inference on uploaded office p
 
 ## System Requirements
 
-- **Python**: Version 3.8 or higher.
+- **Python**: Version 3.9 to 3.12 (Python 3.13 is NOT supported by TensorFlow).
 - **Node.js**: Version 18 or higher.
 - **npm**: Version 9 or higher.
 - **Web Camera**: (Optional) For real-time workspace monitoring.
@@ -44,12 +44,12 @@ The application allows users to perform real-time inference on uploaded office p
 ## 1. Setup & Installation
 
 ### Step 1.1: Backend Virtual Environment
-Navigate to the project root directory and set up a virtual environment containing Python dependencies:
+Navigate to the project root directory and set up a virtual environment containing Python dependencies. **IMPORTANT: You must use Python 3.9 - 3.12. Creating the venv with python3.13+ will fail during dependency installation.**
 
 **On Linux/macOS:**
 ```bash
-# Create the virtual environment
-python3 -m venv .venv
+# Create the virtual environment (Must use Python 3.9 - 3.12)
+python3.10 -m venv .venv  # Or python3.9, python3.11, python3.12
 
 # Activate the virtual environment
 source .venv/bin/activate
@@ -60,8 +60,8 @@ pip install -r backend/requirements.txt
 
 **On Windows:**
 ```cmd
-:: Create the virtual environment
-py -m venv .venv
+:: Create the virtual environment (Must use Python 3.9 - 3.12)
+py -3.11 -m venv .venv  :: Or -3.9, -3.10, -3.12
 
 :: Activate the virtual environment (Command Prompt)
 .venv\Scripts\activate.bat
