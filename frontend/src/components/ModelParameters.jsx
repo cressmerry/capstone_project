@@ -83,7 +83,11 @@ export default function ModelParameters({
               </div>
               <Slider 
                 value={confThreshold} 
-                onValueChange={(val) => setConfThreshold(val[0])}
+                onValueChange={(val) => {
+                  if (val && typeof val[0] === 'number' && !isNaN(val[0])) {
+                    setConfThreshold(val[0]);
+                  }
+                }}
                 max={100} 
                 min={10} 
                 step={1}
@@ -98,7 +102,11 @@ export default function ModelParameters({
               </div>
               <Slider 
                 value={nmsThreshold} 
-                onValueChange={(val) => setNmsThreshold(val[0])}
+                onValueChange={(val) => {
+                  if (val && typeof val[0] === 'number' && !isNaN(val[0])) {
+                    setNmsThreshold(val[0]);
+                  }
+                }}
                 max={100} 
                 min={10} 
                 step={1}

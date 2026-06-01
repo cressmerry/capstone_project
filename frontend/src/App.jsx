@@ -190,8 +190,10 @@ export default function App() {
     const formData = new FormData()
     formData.append('file', blob)
     
-    const conf = confThreshold / 100
-    const nms = nmsThreshold / 100
+    const confVal = Number(confThreshold)
+    const conf = (!isNaN(confVal) && isFinite(confVal)) ? (confVal / 100) : 0.5
+    const nmsVal = Number(nmsThreshold)
+    const nms = (!isNaN(nmsVal) && isFinite(nmsVal)) ? (nmsVal / 100) : 0.4
     const allowed = checkedClasses.join(',')
     
     let url = `${API_URL}/api/detect?conf_threshold=${conf}&nms_threshold=${nms}&model_variant=${activeModel}`
@@ -286,8 +288,10 @@ export default function App() {
           return
         }
         
-        const conf = confThresholdRef.current / 100
-        const nms = nmsThresholdRef.current / 100
+        const confVal = Number(confThresholdRef.current)
+        const conf = (!isNaN(confVal) && isFinite(confVal)) ? (confVal / 100) : 0.5
+        const nmsVal = Number(nmsThresholdRef.current)
+        const nms = (!isNaN(nmsVal) && isFinite(nmsVal)) ? (nmsVal / 100) : 0.4
         const allowed = checkedClassesRef.current.join(',')
         
         let url = `${API_URL}/api/detect?conf_threshold=${conf}&nms_threshold=${nms}&model_variant=${activeModelRef.current}`

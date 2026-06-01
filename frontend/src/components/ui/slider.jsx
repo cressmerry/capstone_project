@@ -8,6 +8,7 @@ function Slider({
   value,
   min = 0,
   max = 100,
+  onValueChange,
   ...props
 }) {
   const _values = Array.isArray(value)
@@ -20,6 +21,16 @@ function Slider({
           ? [defaultValue]
           : [min, max]
 
+  const handleValueChange = (val) => {
+    if (!onValueChange) return;
+    if (Array.isArray(val)) {
+      const cleanVal = val.map(Number).filter(v => !isNaN(v) && v !== null && v !== undefined);
+      if (cleanVal.length > 0) {
+        onValueChange(cleanVal);
+      }
+    }
+  };
+
   return (
     <SliderPrimitive.Root
       className={cn("data-horizontal:w-full data-vertical:h-full", className)}
@@ -29,6 +40,7 @@ function Slider({
       min={min}
       max={max}
       thumbAlignment="edge"
+      onValueChange={handleValueChange}
       {...props}>
       <SliderPrimitive.Control
         className="relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col">
