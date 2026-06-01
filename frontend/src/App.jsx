@@ -158,6 +158,8 @@ export default function App() {
         }
         setDetections(dets)
       }
+    } else if (!imageSrc && !imageBlob && activeSource === 'upload') {
+      setDetections([])
     }
   }, [confThreshold, nmsThreshold, checkedClasses, activeModel, imageBlob, activeSource])
 
@@ -190,6 +192,9 @@ export default function App() {
     setImageBlob(null)
     setDetections([])
     setInferenceLatency(0)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
 
   // API Call for detection
@@ -223,8 +228,16 @@ export default function App() {
       }
       const data = await res.json()
       
-      setInferenceLatency(data.latency_ms)
-      setDetections(data.detections)
+      setImageBlob(currentBlob => {
+        if (!currentBlob) {
+          setDetections([])
+          setInferenceLatency(0)
+          return null
+        }
+        setInferenceLatency(data.latency_ms)
+        setDetections(data.detections)
+        return currentBlob
+      })
       setServerStatus('online')
     } catch (err) {
       console.error("Detection error:", err)
