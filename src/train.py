@@ -1,5 +1,6 @@
 import os
 import json
+from PIL import Image
 import tensorflow as tf
 from tensorflow.keras import layers, Model
 from tensorflow.keras.applications import MobileNetV2
@@ -44,6 +45,13 @@ def load_data():
     for filename, data in annotations.items():
         img_path = os.path.join(IMAGES_DIR, filename)
         if not os.path.exists(img_path):
+            continue
+            
+        try:
+            with Image.open(img_path) as img:
+                img.verify()
+        except Exception:
+            print(f"Skipping corrupt or malformed image: {filename}")
             continue
             
         # Take the first detection for simplification in this educational script
