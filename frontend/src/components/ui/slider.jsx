@@ -11,15 +11,15 @@ function Slider({
   onValueChange,
   ...props
 }) {
-  const _values = Array.isArray(value)
-    ? value
-    : value !== undefined
-      ? [value]
-      : Array.isArray(defaultValue)
-        ? defaultValue
-        : defaultValue !== undefined
-          ? [defaultValue]
-          : [min, max]
+  const isRange = Array.isArray(value) || Array.isArray(defaultValue);
+  
+  // Normalize values and determine the number of thumbs
+  const primitiveValue = value;
+  const primitiveDefaultValue = defaultValue;
+
+  const thumbCount = isRange 
+    ? (Array.isArray(value) ? value.length : (Array.isArray(defaultValue) ? defaultValue.length : 2))
+    : 1;
 
   const handleValueChange = (val) => {
     if (!onValueChange) return;
@@ -28,6 +28,11 @@ function Slider({
       if (cleanVal.length > 0) {
         onValueChange(cleanVal);
       }
+    } else {
+      const num = Number(val);
+      if (!isNaN(num)) {
+        onValueChange([num]);
+      }
     }
   };
 
@@ -35,8 +40,8 @@ function Slider({
     <SliderPrimitive.Root
       className={cn("data-horizontal:w-full data-vertical:h-full", className)}
       data-slot="slider"
-      defaultValue={defaultValue}
-      value={_values}
+      defaultValue={primitiveDefaultValue}
+      value={primitiveValue}
       min={min}
       max={max}
       thumbAlignment="edge"
@@ -51,7 +56,7 @@ function Slider({
             data-slot="slider-range"
             className="bg-primary select-none data-horizontal:h-full data-vertical:w-full" />
         </SliderPrimitive.Track>
-        {Array.from({ length: _values.length }, (_, index) => (
+        {Array.from({ length: thumbCount }, (_, index) => (
           <SliderPrimitive.Thumb
             data-slot="slider-thumb"
             key={index}

@@ -66,6 +66,14 @@ async def detect_objects(
     allowed_classes: str = Query(None),  # Comma-separated list
     model_variant: str = Query("coco")
 ):
+    import math
+    if (math.isnan(conf_threshold) or math.isinf(conf_threshold) or 
+        math.isnan(nms_threshold) or math.isinf(nms_threshold)):
+        raise HTTPException(
+            status_code=400,
+            detail="Threshold values cannot be NaN or Infinite."
+        )
+
     if detector is None:
         raise HTTPException(
             status_code=503,
