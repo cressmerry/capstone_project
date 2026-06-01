@@ -46,14 +46,30 @@ The application allows users to perform real-time inference on uploaded office p
 ### Step 1.1: Backend Virtual Environment
 Navigate to the project root directory and set up a virtual environment containing Python dependencies:
 
+**On Linux/macOS:**
 ```bash
 # Create the virtual environment
-py -3.13 -m venv .venv
+python3 -m venv .venv
 
 # Activate the virtual environment
 source .venv/bin/activate
 
 # Install required packages
+pip install -r backend/requirements.txt
+```
+
+**On Windows:**
+```cmd
+:: Create the virtual environment
+py -m venv .venv
+
+:: Activate the virtual environment (Command Prompt)
+.venv\Scripts\activate.bat
+
+:: Activate the virtual environment (PowerShell)
+.venv\Scripts\Activate.ps1
+
+:: Install required packages
 pip install -r backend/requirements.txt
 ```
 
@@ -111,11 +127,16 @@ python src/train.py
 Run both components concurrently in separate terminals for fast hot-reloading:
 
 * **Start Backend**:
-  ```bash
-  # Ensure virtual environment is active
-  source .venv/bin/activate
-  uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000
-  ```
+  * **On Linux/macOS**:
+    ```bash
+    source .venv/bin/activate
+    uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000
+    ```
+  * **On Windows**:
+    ```cmd
+    .venv\Scripts\activate
+    uvicorn backend.app:app --reload --host 127.0.0.1 --port 8000
+    ```
 * **Start Frontend**:
   ```bash
   cd frontend

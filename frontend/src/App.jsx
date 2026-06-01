@@ -43,6 +43,7 @@ export default function App() {
   // Server connectivity State
   const [serverStatus, setServerStatus] = useState('checking') // 'online' | 'offline' | 'checking'
   const [serverBackend, setServerBackend] = useState('None')
+  const [hasCustomModel, setHasCustomModel] = useState(true)
   
   // Media Input & Detections State
   const [imageSrc, setImageSrc] = useState(null)
@@ -110,6 +111,10 @@ export default function App() {
         if (data.status === 'active') {
           setServerStatus('online')
           setServerBackend(data.backend)
+          setHasCustomModel(!!data.has_custom_model)
+          if (!data.has_custom_model) {
+            setActiveModel('coco')
+          }
         } else {
           setServerStatus('offline')
         }
@@ -158,7 +163,10 @@ export default function App() {
 
   // Process uploaded/dragged images
   const handleImageFile = (file) => {
-    if (!file || !file.type.startsWith('image/')) return
+    if (!file) return
+    const isImg = file.type.startsWith('image/') || 
+                  /\.(jpg|jpeg|png|webp|gif|bmp|tiff|heic|heif|ico)$/i.test(file.name)
+    if (!isImg) return
     setImageBlob(file)
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -412,6 +420,7 @@ export default function App() {
             checkedClasses={checkedClasses}
             handleCheckboxChange={handleCheckboxChange}
             setCheckedClasses={setCheckedClasses}
+            hasCustomModel={hasCustomModel}
           />
           
           {/* CENTER VIEW: DETECTIONS CANVAS & VIDEO STREAM */}

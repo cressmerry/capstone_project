@@ -28,7 +28,8 @@ export default function ModelParameters({
   setNmsThreshold,
   checkedClasses,
   handleCheckboxChange,
-  setCheckedClasses
+  setCheckedClasses,
+  hasCustomModel = true
 }) {
   const classesToDisplay = activeModel === 'custom' ? CUSTOM_CLASSES : COCO_CLASSES;
   return (
@@ -63,15 +64,25 @@ export default function ModelParameters({
               <Button 
                 variant="ghost" 
                 onClick={() => setActiveModel('custom')} 
+                disabled={!hasCustomModel}
                 className={`text-xs h-9 rounded-lg font-medium transition-all ${
                   activeModel === 'custom' 
                     ? 'bg-slate-800 text-cyan-400 shadow-sm' 
                     : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900/50'
-                }`}
+                } ${!hasCustomModel ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
               >
                 Fine-Tuned SSD (OI)
               </Button>
             </div>
+            {!hasCustomModel && (
+              <div className="mt-1.5 p-3 bg-amber-950/25 border border-amber-500/20 rounded-xl text-amber-300 text-[11px] leading-relaxed flex flex-col gap-1 shadow-sm">
+                <div className="font-semibold flex items-center gap-1.5 text-amber-400 text-xs">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Fine-Tuned Model Offline
+                </div>
+                <span>The custom weights file <code>ssd_fine_tuned_head.weights.h5</code> is missing on the server. The backend will fall back to the base COCO model. Run <code>python src/train.py</code> to train it.</span>
+              </div>
+            )}
           </div>
 
           {/* Threshold Sliders */}

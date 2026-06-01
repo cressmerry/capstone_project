@@ -22,14 +22,26 @@ class SSDObjectDetector:
         if os.path.exists(self.pb_path) and os.path.exists(self.pbtxt_path):
             self.net = cv2.dnn.readNetFromTensorflow(self.pb_path, self.pbtxt_path)
             # Try to use CUDA if available, fallback to CPU
+            has_cuda = False
             try:
-                self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-                self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
-                print("Using CUDA backend for OpenCV DNN.")
+                if hasattr(cv2, 'cuda') and cv2.cuda.getCudaEnabledDeviceCount() > 0:
+                    has_cuda = True
             except Exception:
+                pass
+                
+            if has_cuda:
+                try:
+                    self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+                    self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+                    print("Using CUDA backend for OpenCV DNN.")
+                except Exception:
+                    self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
+                    self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+                    print("Falling back to CPU backend for OpenCV DNN.")
+            else:
                 self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
                 self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
-                print("Falling back to CPU backend for OpenCV DNN.")
+                print("Using CPU backend for OpenCV DNN.")
         else:
             raise FileNotFoundError(
                 f"Model files not found at {self.model_dir}. Run download_models.py first."
@@ -138,7 +150,7 @@ class SSDObjectDetector:
                             })
                 return results
             else:
-                print("Custom model weights not loaded. Falling back to COCO model.")
+                raise ValueError("Custom model weights are not loaded.")
 
         h, w = image_np.shape[:2]
         

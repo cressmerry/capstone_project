@@ -54,7 +54,8 @@ async def get_status():
         "status": "active",
         "model_name": "SSD MobileNet V2 (COCO)",
         "backend": backend_str,
-        "classes": sorted(list(detector.labels.values()))
+        "classes": sorted(list(detector.labels.values())),
+        "has_custom_model": detector is not None and detector.custom_model is not None
     }
 
 @app.post("/api/detect")
@@ -73,11 +74,31 @@ async def detect_objects(
 
     # Read bytes and check validity
     contents = await file.read()
-    nparr = np.frombuffer(contents, np.uint8)
-    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
+    image = None
+    # 1. Attempt decoding using Pillow (handles WebP, GIF, BMP, TIFF, transparent PNG, and corrects EXIF orientation)
+    try:
+        from PIL import Image, ImageOps
+        import io
+        pil_img = Image.open(io.BytesIO(contents))
+        pil_img = ImageOps.exif_transpose(pil_img)
+        if pil_img.mode != "RGB":
+            pil_img = pil_img.convert("RGB")
+        rgb_arr = np.array(pil_img)
+        image = cv2.cvtColor(rgb_arr, cv2.COLOR_RGB2BGR)
+    except Exception as e:
+        print(f"Pillow decoding failed: {e}")
+        
+    # 2. Fallback to standard cv2.imdecode
     if image is None:
-        raise HTTPException(status_code=400, detail="Invalid image file.")
+        try:
+            nparr = np.frombuffer(contents, np.uint8)
+            image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        except Exception:
+            image = None
+            
+    if image is None:
+        raise HTTPException(status_code=400, detail="Invalid or unsupported image file format.")
 
     h, w = image.shape[:2]
     
@@ -85,6 +106,12 @@ async def detect_objects(
     classes_filter = None
     if allowed_classes:
         classes_filter = set(cls.strip().lower() for cls in allowed_classes.split(",") if cls.strip())
+
+    if model_variant == "custom" and (detector.custom_model is None):
+        raise HTTPException(
+            status_code=400,
+            detail="Fine-tuned custom model weights are not loaded. Run the training script first."
+        )
 
     # Measure latency
     start_time = time.perf_counter()
